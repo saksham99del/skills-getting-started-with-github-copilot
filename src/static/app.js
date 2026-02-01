@@ -58,7 +58,52 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activity.participants && activity.participants.length > 0) {
       activity.participants.forEach(email => {
         const li = document.createElement('li');
-        li.textContent = email;
+
+        const emailSpan = document.createElement('span');
+        emailSpan.textContent = email;
+        emailSpan.className = 'participant-email';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-participant';
+        removeBtn.setAttribute('aria-label', `Remove ${email}`);
+        removeBtn.innerHTML = '🗑️';
+
+        // Remove participant when clicked
+        removeBtn.addEventListener('click', async () => {
+          try {
+            const response = await fetch(
+              `/activities/${encodeURIComponent(name)}/signup?email=${encodeURIComponent(email)}`,
+              { method: 'DELETE' }
+            );
+
+            const result = await response.json();
+
+            if (response.ok) {
+              messageDiv.textContent = result.message;
+              messageDiv.className = 'info';
+              messageDiv.classList.remove('hidden');
+
+              // Refresh the activities list to reflect change
+              fetchActivities();
+
+              setTimeout(() => {
+                messageDiv.classList.add('hidden');
+              }, 4000);
+            } else {
+              messageDiv.textContent = result.detail || 'Failed to remove participant.';
+              messageDiv.className = 'error';
+              messageDiv.classList.remove('hidden');
+            }
+          } catch (error) {
+            console.error('Error removing participant:', error);
+            messageDiv.textContent = 'Failed to remove participant. Please try again.';
+            messageDiv.className = 'error';
+            messageDiv.classList.remove('hidden');
+          }
+        });
+
+        li.appendChild(emailSpan);
+        li.appendChild(removeBtn);
         participantsList.appendChild(li);
       });
     } else {
